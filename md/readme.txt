@@ -1,1 +1,1 @@
-This folder is where MD simulations are stored.
+This directory stores md data.
