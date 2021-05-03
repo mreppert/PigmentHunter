@@ -1,9 +1,0 @@
-#include "top/CLA.itp"
-
-[ system ]
-; Name
-Chlorophyll a
-
-[ molecules ]
-; Compound        #mols
-CLA                 1
