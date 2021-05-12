@@ -110,7 +110,8 @@ def eliminate_types(PigNdcs, PClass, TypeList, UNK, instruc):
                     for tndx in range(0, len(TypeList)):
                         if TypeList[tndx].xnames.count(at.name)==0:
                             TypeAllowed[tndx] = 0
-        
+                            #print('Could not match atom ' + at.name + ' to a known ' + TypeList[tndx].stdname + ' atom')
+                            
         alist = []
         for tndx in range(0, len(TypeList)):
             if TypeAllowed[tndx]:
