@@ -16,6 +16,7 @@ def calculate_coupling(PigList, ChainList):
     
     Npigs = len(SelPigs)
     CoupMat = np.zeros((Npigs,Npigs))
+    RotMat = np.zeros((Npigs,Npigs))
     Dips = []
     h = 6.62607015e-34 #J*s
     c = 2.998e10 #cm/s
@@ -168,7 +169,6 @@ def calculate_coupling(PigList, ChainList):
         CoupMat = CoupMat + np.transpose(CoupMat)
         
         # Calculate rotation matrix
-        RotMat = np.zeros((Npigs,Npigs))
         for m in range(0, Npigs):
             for n in range(0, Npigs):
                 Rmn = CentMat[n,:] - CentMat[m,:]
@@ -308,12 +308,12 @@ def calculate_shift(PigList, ChainList, instruc):
             data_frame = instruc.to_dataframe()
             
             # We exclude the pigment itself from calculation
-            #ndcs = np.logical_and(data_frame.resid != pig.res.idx, data_frame.resid != lig.idx)
+            #ndcs = np.logical_and(data_frame.resid != pig.residue.idx, data_frame.resid != lig.idx)
             ndcs = data_frame.resid != pig.residue.idx
             
             for atm in range(0, len(ListAtoms[p])):
                 dQ = ListQ11[p][atm] - ListQ00[p][atm]
-                Rvec = (CoordList[p][atm,:] - instruc.coordinates[ndcs,:]*ang2cm)
+                Rvec = CoordList[p][atm,:] - instruc.coordinates[ndcs,:]*ang2cm
                 Dvec = np.sqrt(np.sum(np.power(Rvec,2),1))
                 Qvec = data_frame[ndcs].charge
                 shift += eo*eo*dQ*np.sum(np.divide(Qvec,Dvec))*Erg2J/(h*c*eps_eff)

@@ -1,4 +1,4 @@
-define          = -DPOSRES
+define          = -DPOSRES -DPOSRESPIG -DPOSRES_WATER
 
 ; LINES STARTING WITH ';' ARE COMMENTS
 title		    = Minimization	; Title of run
