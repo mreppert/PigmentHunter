@@ -1,12 +1,13 @@
+define          = -DPOSRES -DPOSRESPIG -DPOSRES_WATER
 ; Run parameters
 integrator              = md        ; leap-frog integrator
-nsteps                  = 25000     ; 2 * 25000 = 50 ps
+nsteps                  = 50000     ; 2 * 50000 = 100 ps
 dt                      = 0.002     ; 2 fs
 ; Output control
-nstxout                 = 500       ; save coordinates every 1.0 ps
-nstvout                 = 500       ; save velocities every 1.0 ps
-nstenergy               = 500       ; save energies every 1.0 ps
-nstlog                  = 500       ; update log file every 1.0 ps
+nstxout                 = 250       ; save coordinates every 500 fs
+nstvout                 = 250       ; save velocities every 500 fs
+nstenergy               = 250       ; save energies every 500 fs
+nstlog                  = 250       ; update log file every 500 fs
 ; Bond parameters
 continuation            = no        ; first dynamics run
 constraint_algorithm    = lincs     ; holonomic constraints

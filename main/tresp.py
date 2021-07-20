@@ -7,6 +7,10 @@ sys.path.append('./main/')
 import pigment
 
 def calculate_coupling(PigList, ChainList):
+
+    CoupTraj = []
+    DipTraj = []
+    RotTraj = []
     
     # First create list of chain-selected pigments
     SelPigs = []
@@ -15,9 +19,6 @@ def calculate_coupling(PigList, ChainList):
             SelPigs.append(pig)
     
     Npigs = len(SelPigs)
-    CoupMat = np.zeros((Npigs,Npigs))
-    RotMat = np.zeros((Npigs,Npigs))
-    Dips = []
     h = 6.62607015e-34 #J*s
     c = 2.998e10 #cm/s
     eo = 4.80320451e-10 # esu
@@ -56,11 +57,9 @@ def calculate_coupling(PigList, ChainList):
                         try:
                             atoms.append(items[0])
                             
-                            # TrESP file charges are in units of 1000*eo.
-                            # We convert here to eo. 
-                            q00.append(float(items[1])*1.0e-3)
-                            q10.append(float(items[2])*1.0e-3)
-                            q11.append(float(items[3])*1.0e-3)
+                            q00.append(float(items[1]))
+                            q10.append(float(items[2]))
+                            q11.append(float(items[3]))
                             
                         except:
                             print('Error reading TrESP input file ' + fname + '.')
@@ -98,8 +97,14 @@ def calculate_coupling(PigList, ChainList):
             if error:
                 break
                 
-    # If no errors, calculate centers
-    CentMat = np.zeros((Npigs,3))
+    # Check how many frames there are in the structure.
+    # We use the first selected pigment as a proxy since all
+    # should have the same number of frames. 
+    # First dimension of atcoords is number of frames.
+    Nframes = np.shape(SelPigs[0].atcoords)[0]
+
+    # If no errors, calculate centers.
+    CentMat = np.zeros((Nframes,Npigs,3))
     CentAtoms = ['NA', 'NB', 'NC', 'ND']
     for p in range(0, Npigs):
         pig = SelPigs[p]
@@ -111,87 +116,83 @@ def calculate_coupling(PigList, ChainList):
                 break
             else:
                 ndx = pig.atnames.index(name)
-                CentMat[p,:] += pig.atcoords[ndx]/float(len(CentAtoms))
+                CentMat[:,p,:] += pig.atcoords[:,ndx,:]/float(len(CentAtoms))
 
-#     for p in range(0, Npigs):
-#         pig = SelPigs[p]
-#         MGndx = pig.atnames.index('MG')
-#         print('Calculated: ' + str(CentMat[p]))
-#         print('MG: ' + str(pig.atcoords[MGndx]))
-#         print('')
-    
     # If no errors, all pigments have TrESP parameters and necessary atoms, 
-    # and pigment centers have been calculated and stored in CentMat.
+    # and pigment centers have been calculated (for all frames) and stored in CentMat.
     if error==False:
         # Build list of TrESP coordinates for each pigment
         # NB: Units are converted to cm! (cgs units)
         CoordList = []
         for p in range(0, Npigs):
             pig = SelPigs[p]
-            coords = []
+            coords = np.zeros((Nframes, len(ListAtoms[p]), 3))
+
             # Find index associated with each TrESP atom in the structure.
             # Coordinate list will be sorted in atom order specified in TrESP 
             # parameter file *not* order of crystal structure. 
-            for name in ListAtoms[p]:
-                ndx = pig.atnames.index(name)
-                coords.append(pig.atcoords[ndx])
-            CoordList.append(np.array(coords)*ang2cm)
-            
-        # Calculate pigment dipole lengths (as per default TrESP charges)
-        # We'll divide charges for each pigment by the ratio of the *calculated*
-        # dipole length to the *standard* dipole length. 
-        # Charges are in units of cm^3/2 g^1/2 s^−1.
-        DipLengths = []
-        for p in range(0, Npigs):
-            pig = SelPigs[p]
-            dip = np.zeros((3,))
             for n in range(0, len(ListAtoms[p])):
-                dip += eo*ListQ10[p][n]*CoordList[p][n]
-                
-            DipLengths.append(np.linalg.norm(dip))
-            Dips.append(dip/np.linalg.norm(dip))
-        Dips = np.array(Dips)
-        
-        # Calculate interactions
-        for p1 in range(0, Npigs):
-            pig1 = SelPigs[p1]
-            df1 = pig1.species.diplength/DipLengths[p1]
-            for p2 in range(0, p1):
-                pig2 = SelPigs[p2]
-                df2 = pig2.species.diplength/DipLengths[p2]
-                for atm in range(0, len(ListAtoms[p1])):
-                    for atn in range(0, len(ListAtoms[p2])):
-                        Rmn = CoordList[p1][atm,:] - CoordList[p2][atn,:]
-                        rmn = np.linalg.norm(Rmn)
-                        CoupMat[p1,p2] += eo*eo*df1*df2*(ListQ10[p1][atm]*ListQ10[p2][atn]/rmn)*(Erg2J/h)/c
-                        
+                name = ListAtoms[p][n]
+                ndx = pig.atnames.index(name)
+                coords[:,n,:] = pig.atcoords[:,ndx,:].copy()
+            CoordList.append(coords*ang2cm)
+
+    ###############################################
+    # Here is where we begin looping over frames
+    ###############################################
+
+
+        for fr in range(0, Nframes):
+
+            CoupMat = np.zeros((Npigs,Npigs))
+            RotMat = np.zeros((Npigs,Npigs))
+            Dips = []
+
+            # Calculate pigment dipole lengths (as per default TrESP charges)
+            # We'll divide charges for each pigment by the ratio of the *calculated*
+            # dipole length to the *standard* dipole length. 
+            # Charges are in units of cm^3/2 g^1/2 s^−1.
+            DipLengths = []
+            for p in range(0, Npigs):
+                pig = SelPigs[p]
+                dip = np.zeros((3,))
+                for n in range(0, len(ListAtoms[p])):
+                    dip += eo*ListQ10[p][n]*CoordList[p][fr,n,:]
+                    
+                DipLengths.append(np.linalg.norm(dip))
+                Dips.append(dip/np.linalg.norm(dip))
+            Dips = np.array(Dips)
             
-        CoupMat = CoupMat + np.transpose(CoupMat)
-        
-        # Calculate rotation matrix
-        for m in range(0, Npigs):
-            for n in range(0, Npigs):
-                Rmn = CentMat[n,:] - CentMat[m,:]
-                #osc = SelPigs[m].species.diplength*SelPigs[n].species.diplength
-                osc = 1.0
-                RotMat[m,n] = np.dot(Rmn, np.cross(Dips[m,:], Dips[n,:]))*osc
+            # Calculate interactions
+            for p1 in range(0, Npigs):
+                pig1 = SelPigs[p1]
+                df1 = pig1.species.diplength/DipLengths[p1]
+                for p2 in range(0, p1):
+                    pig2 = SelPigs[p2]
+                    df2 = pig2.species.diplength/DipLengths[p2]
+                    for atm in range(0, len(ListAtoms[p1])):
+                        for atn in range(0, len(ListAtoms[p2])):
+                            Rmn = CoordList[p1][fr,atm,:] - CoordList[p2][fr,atn,:]
+                            rmn = np.linalg.norm(Rmn)
+                            CoupMat[p1,p2] += eo*eo*df1*df2*(ListQ10[p1][atm]*ListQ10[p2][atn]/rmn)*(Erg2J/h)/c
+                            
+                
+            CoupMat = CoupMat + np.transpose(CoupMat)
+            
+            # Calculate rotation matrix
+            for m in range(0, Npigs):
+                for n in range(0, Npigs):
+                    Rmn = CentMat[fr,n,:] - CentMat[fr,m,:]
+                    #osc = SelPigs[m].species.diplength*SelPigs[n].species.diplength
+                    osc = 1.0
+                    RotMat[m,n] = np.dot(Rmn, np.cross(Dips[m,:], Dips[n,:]))*osc
+
+            CoupTraj.append(CoupMat)
+            DipTraj.append(Dips)
+            RotTraj.append(RotMat)
         
     # NB: oscillator strengths are all finally scaled to unity!
-    return CoupMat, Dips, RotMat
-
-# Picks the residue to which the atom closest to MG belongs
-def locate_ligand(pig, instruc):
-    # Only do this if an MG atom is listed in the structure
-    if pig.atnames.count('MG')!=0:
-        MGndx = pig.atnames.index('MG')
-        data_frame = instruc.to_dataframe()
-        bgndcs = (data_frame.resid != pig.residue.idx)
-        dvec = np.sqrt(np.sum(np.power(pig.atcoords[MGndx] - instruc.coordinates[bgndcs],2),1))
-        ndx0 = np.argmin(dvec)
-        at0 = instruc[bgndcs].atoms[ndx0]
-        return at0.residue
-    else:
-        return []
+    return CoupTraj, DipTraj, RotTraj
 
 
 def calculate_shift(PigList, ChainList, instruc):
@@ -203,7 +204,7 @@ def calculate_shift(PigList, ChainList, instruc):
             SelPigs.append(pig)
     
     Npigs = len(SelPigs)
-    tFreqs = np.zeros((Npigs,))
+    FreqTraj = []
         
     h = 6.62607015e-34 #J*s
     c = 2.998e10 #cm/s
@@ -284,39 +285,53 @@ def calculate_shift(PigList, ChainList, instruc):
                 
     # If no errors, all pigments have TrESP parameters and necessary atoms. 
     if error==False:
+
+        # Number of frames in trajectory
+        Nframes = np.shape(SelPigs[0].atcoords)[0]
+
         # Build list of TrESP coordinates for each pigment
         # NB: Units are converted to cm! (cgs units)
         CoordList = []
         for p in range(0, Npigs):
             pig = SelPigs[p]
-            coords = []
+            coords = np.zeros((Nframes, len(ListAtoms[p]), 3))
             # Find index associated with each TrESP atom in the structure.
             # Coordinate list will be sorted in atom order specified in TrESP
             # parameter file *not* order of crystal structure. 
-            for name in ListAtoms[p]:
+            for n in range(0, len(ListAtoms[p])):
+                name = ListAtoms[p][n]
                 ndx = pig.atnames.index(name)
-                coords.append(pig.atcoords[ndx])
-            CoordList.append(np.array(coords)*ang2cm)
-            
+                coords[:,n,:] = pig.atcoords[:,ndx,:].copy()
+            CoordList.append(coords*ang2cm)
+
+
+        for fr in range(0, Nframes):
+
+            tFreqs = np.zeros((Npigs,))
+
+            # Coordinates for local frame
+            frcoords = ang2cm*instruc.get_coordinates(fr)
         
-        for p in range(0, Npigs):
-            
-            pig = SelPigs[p]
-            shift = 0.0
-            
-            #lig = locate_ligand(pig, instruc)
-            data_frame = instruc.to_dataframe()
-            
-            # We exclude the pigment itself from calculation
-            #ndcs = np.logical_and(data_frame.resid != pig.residue.idx, data_frame.resid != lig.idx)
-            ndcs = data_frame.resid != pig.residue.idx
-            
-            for atm in range(0, len(ListAtoms[p])):
-                dQ = ListQ11[p][atm] - ListQ00[p][atm]
-                Rvec = CoordList[p][atm,:] - instruc.coordinates[ndcs,:]*ang2cm
-                Dvec = np.sqrt(np.sum(np.power(Rvec,2),1))
-                Qvec = data_frame[ndcs].charge
-                shift += eo*eo*dQ*np.sum(np.divide(Qvec,Dvec))*Erg2J/(h*c*eps_eff)
-            tFreqs[p] = shift
+            for p in range(0, Npigs):
+                
+                pig = SelPigs[p]
+                shift = 0.0
+                
+                data_frame = instruc.to_dataframe()
+                
+                # We exclude the pigment itself from calculation
+                ndcs = (data_frame.resid != pig.residue.idx)
+                
+                for atm in range(0, len(ListAtoms[p])):
+                    dQ = ListQ11[p][atm] - ListQ00[p][atm]
+                    Rvec = CoordList[p][fr,atm,:] - frcoords[ndcs,:]
+                    Dvec = np.sqrt(np.sum(np.power(Rvec,2),1))
+                    Qvec = (data_frame[ndcs].charge).to_numpy()
+                    shift += eo*eo*dQ*np.sum(np.divide(Qvec,Dvec))*Erg2J/(h*c*eps_eff)
+                    
+                tFreqs[p] = shift
+                #print(shift)
+
+            FreqTraj.append(tFreqs)
         
-    return tFreqs, error
+    return FreqTraj, error
