@@ -321,7 +321,7 @@ def calculate_shift(PigList, ChainList, instruc):
                 
                 # We exclude the pigment itself from calculation
                 ndcs = (data_frame.resid != pig.residue.idx)
-                
+                                
                 for atm in range(0, len(ListAtoms[p])):
                     dQ = ListQ11[p][atm] - ListQ00[p][atm]
                     Rvec = CoordList[p][fr,atm,:] - frcoords[ndcs,:]
@@ -330,7 +330,6 @@ def calculate_shift(PigList, ChainList, instruc):
                     shift += eo*eo*dQ*np.sum(np.divide(Qvec,Dvec))*Erg2J/(h*c*eps_eff)
                     
                 tFreqs[p] = shift
-                #print(shift)
 
             FreqTraj.append(tFreqs)
         
