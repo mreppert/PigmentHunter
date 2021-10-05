@@ -78,7 +78,12 @@ def calculate_coupling(PigList, ChainList):
     # If no errors, we've located all relevant TrESP files and imported the data. 
     # Now check whether all necessary atoms are available in the structure.
     if error==False:
+        
         for p in range(0, Npigs):
+            
+            # Added 10/5/2021 by MER
+            pig = SelPigs[p]
+        
             # Loop over TrESP atoms
             for n in range(0, len(ListAtoms[p])):
 
