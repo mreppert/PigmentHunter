@@ -28,6 +28,8 @@ class category:
 # * xnames: A list of atom names used to define the pigment species. This list
 #      should not include atoms on the BaseNames list used to define the
 #      pigment.category, although different species may hold xnames in common. 
+# 
+# * diplength: Dipole magnitude in statC*cm. (1 D = 1e-18 statC*cm)
 #
 class species:
     def __init__(self, ResName, StdName, pClass, XAtNames, diplength):
