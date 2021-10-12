@@ -163,17 +163,25 @@ def calculate_coupling(PigList, ChainList):
                 dip = np.zeros((3,))
                 for n in range(0, len(ListAtoms[p])):
                     dip += eo*ListQ10[p][n]*CoordList[p][fr,n,:]
-                    
+                
+                # This is the dipole length calculated directly from partial charges
                 DipLengths.append(np.linalg.norm(dip))
+                
+                # Stored dipoles are of unit length
                 Dips.append(dip/np.linalg.norm(dip))
             Dips = np.array(Dips)
             
             # Calculate interactions
             for p1 in range(0, Npigs):
                 pig1 = SelPigs[p1]
+                
+                # We scale the transition charges for each pigment so that the total
+                # dipole strength matches the pigment type. 
                 df1 = pig1.species.diplength/DipLengths[p1]
                 for p2 in range(0, p1):
                     pig2 = SelPigs[p2]
+                    
+                    # For scaling the dipole length
                     df2 = pig2.species.diplength/DipLengths[p2]
                     for atm in range(0, len(ListAtoms[p1])):
                         for atn in range(0, len(ListAtoms[p2])):
@@ -181,22 +189,24 @@ def calculate_coupling(PigList, ChainList):
                             rmn = np.linalg.norm(Rmn)
                             CoupMat[p1,p2] += eo*eo*df1*df2*(ListQ10[p1][atm]*ListQ10[p2][atn]/rmn)*(Erg2J/h)/c
                             
-                
             CoupMat = CoupMat + np.transpose(CoupMat)
             
             # Calculate rotation matrix
+            # Note that RotMat is *not* scaled by dipole strength. 
+            # This is done when the spectrum is calculated. 
             for m in range(0, Npigs):
                 for n in range(0, Npigs):
                     Rmn = CentMat[fr,n,:] - CentMat[fr,m,:]
-                    #osc = SelPigs[m].species.diplength*SelPigs[n].species.diplength
-                    osc = 1.0
-                    RotMat[m,n] = np.dot(Rmn, np.cross(Dips[m,:], Dips[n,:]))*osc
+                    RotMat[m,n] = np.dot(Rmn, np.cross(Dips[m,:], Dips[n,:]))
 
             CoupTraj.append(CoupMat)
             DipTraj.append(Dips)
             RotTraj.append(RotMat)
         
     # NB: oscillator strengths are all finally scaled to unity!
+    # This is true in both DipTraj and RotTraj.
+    # The oscillator strengths must be introduced during spectrum calculation
+    # based on the values stored in diplengths.txt.
     return CoupTraj, DipTraj, RotTraj
 
 

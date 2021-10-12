@@ -111,16 +111,19 @@ def calculate_coupling(PigList, ChainList):
             CoupMat = CoupMat + np.transpose(CoupMat)
             
             # Calculate rotation matrix
+            # Note that RotMat is *not* scaled by dipole length. 
+            # This is done when the spectrum is calculated. 
             for m in range(0, Npigs):
                 for n in range(0, Npigs):
                     Rmn = CentMat[fr,n,:] - CentMat[fr,m,:]
-                    #osc = SelPigs[m].species.diplength*SelPigs[n].species.diplength
-                    osc = 1.0
-                    RotMat[m,n] = np.dot(Rmn, np.cross(DipMat[m,:], DipMat[n,:]))*osc
+                    RotMat[m,n] = np.dot(Rmn, np.cross(DipMat[m,:], DipMat[n,:]))
 
             CoupTraj.append(CoupMat)
             DipTraj.append(DipMat)
             RotTraj.append(RotMat)
         
     # NB: oscillator strengths are all finally scaled to unity!
+    # This is true in both DipTraj and RotTraj.
+    # The oscillator strengths must be introduced during spectrum calculation
+    # based on the values stored in diplengths.txt.
     return CoupTraj, DipTraj, RotTraj
