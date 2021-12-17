@@ -116,7 +116,9 @@ def calculate_coupling(PigList, ChainList):
             for m in range(0, Npigs):
                 for n in range(0, Npigs):
                     Rmn = CentMat[fr,n,:] - CentMat[fr,m,:]
-                    RotMat[m,n] = np.dot(Rmn, np.cross(DipMat[m,:], DipMat[n,:]))
+                    
+                    # MER changed sign on RotMat on 12/16/2021
+                    RotMat[m,n] = - np.dot(Rmn, np.cross(DipMat[m,:], DipMat[n,:]))
 
             CoupTraj.append(CoupMat)
             DipTraj.append(DipMat)
