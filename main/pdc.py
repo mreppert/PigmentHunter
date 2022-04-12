@@ -9,6 +9,9 @@ import pigment
 # Pigments are required to contain only four atoms: NA, NB, NC, and ND
 def calculate_coupling(PigList, ChainList):
 
+    # Output text to print on exit
+    outtxt = ''
+    
     CoupTraj = []
     DipTraj = []
     RotTraj = []
@@ -32,7 +35,7 @@ def calculate_coupling(PigList, ChainList):
     
     # All that's needed for a coupling calculation are the coordinates of the 
     # NA, NB, NC, and ND atoms. The oscillator strength is determined from
-    # the pig.species.diplength value (transition dipole magnitude, in statC*cm). 
+    # the pig.species.diplength value (transition dipole magnitude, in statC*cm).
 
     # Check how many frames there are in the structure.
     # We use the first selected pigment as a proxy since all
@@ -48,9 +51,7 @@ def calculate_coupling(PigList, ChainList):
         pig = SelPigs[p]
         for name in CentAtoms:
             if pig.atnames.count(name)==0:
-                print('Error: Could not locate center atom ' + name + " in pigment " + pig.residue.name + " " + pig.residue.chain + " " + str(pig.residue.number))
-                error = True
-                print('Aborting PDC calculation.')
+                outtxt = 'Error: Could not locate center atom ' + name + " in pigment " + pig.residue.name + " " + pig.residue.chain + " " + str(pig.residue.number) + '. Aborting PDC calculation.<br>'
                 break
             else:
                 ndx = pig.atnames.index(name)
@@ -128,4 +129,4 @@ def calculate_coupling(PigList, ChainList):
     # This is true in both DipTraj and RotTraj.
     # The oscillator strengths must be introduced during spectrum calculation
     # based on the values stored in diplengths.txt.
-    return CoupTraj, DipTraj, RotTraj
+    return CoupTraj, DipTraj, RotTraj, outtxt

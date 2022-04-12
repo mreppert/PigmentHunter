@@ -8,6 +8,9 @@ import pigment
 
 def calculate_coupling(PigList, ChainList):
 
+    # Output text to print on exit
+    outtxt = ''
+    
     CoupTraj = []
     DipTraj = []
     RotTraj = []
@@ -41,7 +44,7 @@ def calculate_coupling(PigList, ChainList):
         # TrESP parameters should be in file 'misc/TrESP/' + pig.species.stdname + '.txt'
         fname = 'misc/TrESP/' + pig.species.stdname + '.txt'
         if os.path.isfile(fname)==False:
-            print('Error: Could not locate TrESP parameter file for species ' + pig.species.stdname)
+            outtxt += 'Error: Could not locate TrESP parameter file for species ' + pig.species.stdname + ".<br>"
             error = True
             break
         else:
@@ -62,8 +65,7 @@ def calculate_coupling(PigList, ChainList):
                             q11.append(float(items[3]))
                             
                         except:
-                            print('Error reading TrESP input file ' + fname + '.')
-                            print('Aborting TrESP calculation.')
+                            outtxt += 'Error reading TrESP input file ' + fname + '. Aborting TrESP calculation.<br>'
                             error = True
                             break
                             
@@ -93,8 +95,7 @@ def calculate_coupling(PigList, ChainList):
                 # If we can't find it in the structure, throw an error. 
                 # pig.atnames stores the names of all atoms associated with pigment pig
                 if pig.atnames.count(name)==0:
-                    print('Error: Could not locate TrESP atom ' + name + " in pigment " + pig.residue.name + " " + pig.residue.chain + " " + str(pig.residue.number))
-                    print('Aborting TrESP calculation.')
+                    outtxt += 'Error: Could not locate TrESP atom ' + name + " in pigment " + pig.residue.name + " " + pig.residue.chain + " " + str(pig.residue.number) + '. Aborting TrESP calculation.<br>'
                     error = True
                     break
 
@@ -109,19 +110,19 @@ def calculate_coupling(PigList, ChainList):
     Nframes = np.shape(SelPigs[0].atcoords)[0]
 
     # If no errors, calculate centers.
-    CentMat = np.zeros((Nframes,Npigs,3))
-    CentAtoms = ['NA', 'NB', 'NC', 'ND']
-    for p in range(0, Npigs):
-        pig = SelPigs[p]
-        for name in CentAtoms:
-            if pig.atnames.count(name)==0:
-                print('Error: Could not locate center atom ' + name + " in pigment " + pig.residue.name + " " + pig.residue.chain + " " + str(pig.residue.number))
-                error = True
-                print('Aborting TrESP calculation.')
-                break
-            else:
-                ndx = pig.atnames.index(name)
-                CentMat[:,p,:] += pig.atcoords[:,ndx,:]/float(len(CentAtoms))
+    if error==False:
+        CentMat = np.zeros((Nframes,Npigs,3))
+        CentAtoms = ['NA', 'NB', 'NC', 'ND']
+        for p in range(0, Npigs):
+            pig = SelPigs[p]
+            for name in CentAtoms:
+                if pig.atnames.count(name)==0:
+                    outxt += 'Error: Could not locate center atom ' + name + " in pigment " + pig.residue.name + " " + pig.residue.chain + " " + str(pig.residue.number) + '. Aborting TrESP calculation.<br>'
+                    error = True
+                    break
+                else:
+                    ndx = pig.atnames.index(name)
+                    CentMat[:,p,:] += pig.atcoords[:,ndx,:]/float(len(CentAtoms))
 
     # If no errors, all pigments have TrESP parameters and necessary atoms, 
     # and pigment centers have been calculated (for all frames) and stored in CentMat.
@@ -209,10 +210,13 @@ def calculate_coupling(PigList, ChainList):
     # This is true in both DipTraj and RotTraj.
     # The oscillator strengths must be introduced during spectrum calculation
     # based on the values stored in diplengths.txt.
-    return CoupTraj, DipTraj, RotTraj
+    return CoupTraj, DipTraj, RotTraj, outtxt
 
 
 def calculate_shift(PigList, ChainList, instruc):
+    
+    # Output text to print on exit
+    outtxt = ''
     
     # First create list of chain-selected pigments
     SelPigs = []
@@ -246,7 +250,7 @@ def calculate_shift(PigList, ChainList, instruc):
         # TrESP parameters should be in file 'misc/TrESP/' + pig.species.stdname + '.txt'
         fname = 'misc/TrESP/' + pig.species.stdname + '.txt'
         if os.path.isfile(fname)==False:
-            print('Error: Could not locate TrESP parameter file for species ' + pig.species.stdname)
+            outtxt += 'Error: Could not locate TrESP parameter file for species ' + pig.species.stdname + ".<br>"
             error = True
             break
         else:
@@ -265,8 +269,7 @@ def calculate_shift(PigList, ChainList, instruc):
                             q10.append(float(items[2]))
                             q11.append(float(items[3]))
                         except:
-                            print('Error reading TrESP input file ' + fname + '.')
-                            print('Aborting TrESP calculation.')
+                            outtxt += 'Error reading TrESP input file ' + fname + '. Aborting TrESP calculation.<br>'
                             error = True
                             break
                             
@@ -295,8 +298,7 @@ def calculate_shift(PigList, ChainList, instruc):
                 # If we can't find it in the structure, throw an error. 
                 # pig.atnames stores the names of all atoms associated with pigment pig
                 if pig.atnames.count(name)==0:
-                    print('Error: Could not locate TrESP atom ' + name + " in pigment " + pig.residue.name + " " + pig.residue.chain + " " + str(pig.residue.number))
-                    print('Aborting TrESP calculation.')
+                    outtxt = 'Error: Could not locate TrESP atom ' + name + " in pigment " + pig.residue.name + " " + pig.residue.chain + " " + str(pig.residue.number) + '. Aborting TrESP calculation.<br>'
                     error = True
                     break
 
