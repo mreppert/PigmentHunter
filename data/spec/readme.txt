@@ -1,1 +1,0 @@
-This directory stores calculated spectra. 

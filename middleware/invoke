@@ -1,2 +1,16 @@
 #!/bin/sh
-/usr/bin/invoke_app -t pigmenthunter -C "start_jupyter -A -T @tool main.ipynb" -u anaconda-6
+
+# Old invoke script: 
+# /usr/bin/invoke_app -t pigmenthunter -C "start_jupyter -A -T @tool main.ipynb" -u anaconda-6
+
+# Creates a "local" storage directory for generated data in 
+# the user's home directory. 
+
+toolDirectory=$(dirname $(dirname $0))
+userDirectory=${HOME}/PIGMENTHUNTER
+
+mkdir -p ${userDirectory}/data
+
+/usr/bin/invoke_app "$@" -t pigmenthunter \
+                         -C "start_jupyter -A -T @tool ${userDirectory}/main.ipynb" \
+                                                  -u anaconda-6
