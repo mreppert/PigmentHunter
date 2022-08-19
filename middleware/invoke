@@ -10,7 +10,10 @@ toolDirectory=$(dirname $(dirname $0))
 userDirectory=${HOME}/PIGMENTHUNTER
 
 mkdir -p ${userDirectory}/data
+echo "${toolDirectory}" > ${HOME}/.phtooldir.txt
+
+cp ${toolDirectory}/redirect.ipynb ${HOME}/.phredirect.ipynb
 
 /usr/bin/invoke_app "$@" -t pigmenthunter \
-                         -C "start_jupyter -A -T @tool main.ipynb" \
+                         -C "start_jupyter -A -T @tool ${userDirectory}/.phredirect.ipynb" \
                                                   -u anaconda-6
