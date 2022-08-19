@@ -6,7 +6,7 @@
 # Creates a "local" storage directory for generated data in 
 # the user's home directory. 
 
-toolDirectory=$(dirname $(dirname $0))
+toolDirectory=$(dirname $(dirname $(readlink -f $0)))
 revision=$(basename $(realpath ${toolDirectory}))
 userDirectory=${HOME}/PIGMENTHUNTER/${revision}
 
