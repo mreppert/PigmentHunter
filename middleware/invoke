@@ -7,13 +7,17 @@
 # the user's home directory. 
 
 toolDirectory=$(dirname $(dirname $0))
-userDirectory=${HOME}/PIGMENTHUNTER
+revision=$(basename $(realpath ${toolDirectory}))
+userDirectory=${HOME}/PIGMENTHUNTER/${revision}
 
-mkdir -p ${userDirectory}/data
-echo "${toolDirectory}" > ${HOME}/.phtooldir.txt
+mkdir -p ${userDirectory}
 
-cp ${toolDirectory}/redirect.ipynb ${HOME}/.phredirect.ipynb
+# this replaces the copy operation done by start_jupyter -T @tool
+# and allows starting Jupyter in a single location (${userDirectory})
+# for all sessions
+cp -sRf ${toolDirectory}/* ${userDirectory}
 
 /usr/bin/invoke_app "$@" -t pigmenthunter \
-                         -C "start_jupyter -A -T @tool ${userDirectory}/.phredirect.ipynb" \
-                                                  -u anaconda-6
+                         -C "start_jupyter -A ${userDirectory}/main.ipynb" \
+                         -e DATADIR=${userDirectory}/data \
+                         -u anaconda-6

@@ -15,7 +15,6 @@ def build_data_folders(DATADIR):
     return
 
 def get_data_dir():
-    HOME = os.environ['HOME']
-    DATADIR = HOME + '/PIGMENTHUNTER/data'
-    return os.path.relpath(DATADIR) 
+    DATADIR = os.environ['DATADIR']
+    return os.path.relpath(DATADIR)
 
