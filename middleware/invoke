@@ -1,10 +1,10 @@
 #!/bin/sh
 
-# Old invoke script: 
+# Old invoke script:
 # /usr/bin/invoke_app -t pigmenthunter -C "start_jupyter -A -T @tool main.ipynb" -u anaconda-6
 
-# Creates a "local" storage directory for generated data in 
-# the user's home directory. 
+# Creates a "local" storage directory for generated data in
+# the user's home directory.
 
 toolDirectory=$(dirname $(dirname $(readlink -f $0)))
 revision=$(basename $(realpath ${toolDirectory}))
@@ -12,12 +12,20 @@ userDirectory=${HOME}/PIGMENTHUNTER/${revision}
 
 mkdir -p ${userDirectory}
 
-# this replaces the copy operation done by start_jupyter -T @tool
-# and allows starting Jupyter in a single location (${userDirectory})
-# for all sessions
-cp -sRf ${toolDirectory}/* ${userDirectory}
+for subDirectory in calc exc md pdb spec ; do
+   mkdir -p ${HOME}/PIGMENTHUNTER/data/${subDirectory}
+   done
 
-/usr/bin/invoke_app "$@" -t pigmenthunter \
-                         -C "start_jupyter -A ${userDirectory}/main.ipynb" \
-                         -e DATADIR=${userDirectory}/data \
-                         -u anaconda-6
+   # this replaces the copy operation done by start_jupyter -T @tool
+   # and allows starting Jupyter in a single location (${userDirectory})
+   # for all sessions
+   cp -sRf ${toolDirectory}/* ${userDirectory}
+
+   # share user data directory across tool revisions
+   rm -rf ${userDirectory}/data
+   ln -s -t ${userDirectory} ../data
+
+   /usr/bin/invoke_app "$@" -t pigmenthunter \
+                            -C "start_jupyter -A ${userDirectory}/main.ipynb" \
+                            -e DATADIR=${userDirectory}/data \
+                            -u anaconda-6
