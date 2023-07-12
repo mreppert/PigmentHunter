@@ -196,6 +196,10 @@ def calculate_shift(PigList, ChainList, instruc):
         if ChainList.count(pig.residue.chain)>0:
             SelPigs.append(pig)
     
+    if len(SelPigs)==0:
+        return [], True, 'No pigments in selection.'
+
+    
     Npigs = len(SelPigs)
     FreqTraj = []
         
@@ -211,6 +215,7 @@ def calculate_shift(PigList, ChainList, instruc):
     
     # Loop over pigments
     error = False
+    msg = ''
     ListNames = []
     ListPar = []
     ListRefXYZ = []
@@ -233,7 +238,7 @@ def calculate_shift(PigList, ChainList, instruc):
         flist = [fnsdnms, fdgamma, fxyz, fpar]
         for fnm in flist:
             if os.path.isfile(fnm)==False:
-                print('Error: Could not locate NSD file ' + fnm)
+                msg = 'Error: Could not locate NSD file ' + fnm + '. Aborting NSD calculation.'
                 error = True
                 break
                 
@@ -250,7 +255,7 @@ def calculate_shift(PigList, ChainList, instruc):
                     if len(line)>0 and line[0]!="#":
                         lst = line.split()
                         if len(lst)<2:
-                            print('Error reading NSD input file ' + fnsdnms + '.')
+                            msg = 'Error reading NSD input file ' + fnsdnms + '. Aborting NSD calculation.'
                             error = True
                             break
                         else:
@@ -265,8 +270,7 @@ def calculate_shift(PigList, ChainList, instruc):
                 ListNames.append(atnms)
             else:
                 error = True
-                print('Error: NSD name file ' + fnsdnms + ' appears to reference a different number (' 
-                      + str(natoms) + ') than the corresponding DGamma (' + str(np.shape(ListDGamma[p])[0]) + ') and/or refxyz file (' + str(np.shape(ListRefXYZ[p])[0]) + ')')
+                msg = 'Error: NSD name file ' + fnsdnms + ' appears to reference a different number (' + str(natoms) + ') than the corresponding DGamma (' + str(np.shape(ListDGamma[p])[0]) + ') and/or refxyz file (' + str(np.shape(ListRefXYZ[p])[0]) + '). Aborting NSD calculation.'
                 
         # If there's an error, we break out of the loop over pigments. 
         # If not, proceed to the next pigment
@@ -289,8 +293,7 @@ def calculate_shift(PigList, ChainList, instruc):
                 # If we can't find it in the structure, throw an error. 
                 # pig.atnames stores the names of all atoms associated with pigment pig
                 if pig.atnames.count(name)==0:
-                    print('Error: Could not locate NSD atom ' + name + " in pigment " + pig.residue.name + " " + pig.residue.chain + " " + str(pig.residue.number))
-                    print('Aborting NSD calculation.')
+                    msg = 'Error: Could not locate NSD atom ' + name + " in pigment " + pig.residue.name + " " + pig.residue.chain + " " + str(pig.residue.number) + '. Aborting NSD calculation.'
                     error = True
                     break
 
@@ -345,4 +348,4 @@ def calculate_shift(PigList, ChainList, instruc):
                 
             FreqTraj.append(tFreqs)
         
-    return FreqTraj, error
+    return FreqTraj, error, msg

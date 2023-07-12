@@ -21,6 +21,9 @@ def calculate_coupling(PigList, ChainList):
     for pig in PigList:
         if ChainList.count(pig.residue.chain)>0:
             SelPigs.append(pig)
+            
+    if len(SelPigs)==0:
+        return [], [], [], 'No pigments in selection.'
     
     Npigs = len(SelPigs)
     h = 6.62607015e-34 #J*s

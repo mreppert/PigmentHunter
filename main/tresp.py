@@ -20,6 +20,9 @@ def calculate_coupling(PigList, ChainList):
     for pig in PigList:
         if ChainList.count(pig.residue.chain)>0:
             SelPigs.append(pig)
+            
+    if len(SelPigs)==0:
+        return [], [], [], 'No pigments in selection.'
     
     Npigs = len(SelPigs)
     h = 6.62607015e-34 #J*s
@@ -223,6 +226,9 @@ def calculate_shift(PigList, ChainList, instruc):
     for pig in PigList:
         if ChainList.count(pig.residue.chain)>0:
             SelPigs.append(pig)
+            
+    if len(SelPigs)==0:
+        return [], True, 'No pigments in selection.'
     
     Npigs = len(SelPigs)
     FreqTraj = []
@@ -356,4 +362,4 @@ def calculate_shift(PigList, ChainList, instruc):
 
             FreqTraj.append(tFreqs)
         
-    return FreqTraj, error
+    return FreqTraj, error, outtxt
