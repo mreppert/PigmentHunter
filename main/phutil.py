@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 # Build data folder structure if necessary. 
 def build_data_folders(DATADIR):
