@@ -155,7 +155,7 @@ def nsd_calc(Dobs, Dgamma):
     dtot = np.sqrt(dvec.transpose()@B@dvec)
     OOP.append(dtot)
     
-    return np.array(D0)
+    return np.array(D0), np.array(OOP)
 
 
 def siteenergy(d0, pars):
