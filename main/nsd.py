@@ -202,7 +202,9 @@ def calculate_shift(PigList, ChainList, instruc):
     
     Npigs = len(SelPigs)
     FreqTraj = []
-        
+    D0Traj = []
+    DOOPTraj = []
+    
     h = 6.62607015e-34 #J*s
     c = 2.998e10 #cm/s
     eo = 4.80320451e-10 # esu
@@ -327,6 +329,8 @@ def calculate_shift(PigList, ChainList, instruc):
         for fr in range(0, Nframes):
 
             tFreqs = np.zeros((Npigs,))
+            tD0 = np.zeros((Npigs,6))
+            tDOOP = np.zeros((Npigs,6))
 
             for p in range(0, Npigs):
                 
@@ -340,12 +344,15 @@ def calculate_shift(PigList, ChainList, instruc):
                 Dobs = nsd_transformation(ListRefXYZ[p], XYZ)
                 
                 # Run NSD calculation
-                d0 = nsd_calc(Dobs, ListDGamma[p])
-                
+                d0, doop = nsd_calc(Dobs, ListDGamma[p])
+                tD0[p,:] = d0
+                tDOOP[p,:] = doop
                 
                 # Calculate site energy 
                 tFreqs[p] = siteenergy(d0, ListPar[p])
                 
             FreqTraj.append(tFreqs)
-        
-    return FreqTraj, error, msg
+            D0Traj.append(tD0)
+            DOOPTraj.append(tDOOP)
+            
+    return FreqTraj, D0Traj, DOOPTraj, error, msg
