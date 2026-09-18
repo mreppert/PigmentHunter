@@ -114,6 +114,8 @@ def calculate_coupling(PigList, ChainList):
 
     # If no errors, calculate centers.
     if error==False:
+        
+        # NB: CentMat has native PDB units, i.e., angstrom
         CentMat = np.zeros((Nframes,Npigs,3))
         CentAtoms = ['NA', 'NB', 'NC', 'ND']
         for p in range(0, Npigs):
@@ -203,6 +205,7 @@ def calculate_coupling(PigList, ChainList):
                     Rmn = CentMat[fr,n,:] - CentMat[fr,m,:]
                     
                     # MER changed sign on RotMat on 12/16/2021
+                    # NB: RotMat contains length scale in units of CentMat, i.e., Angstrom. 
                     RotMat[m,n] = - np.dot(Rmn, np.cross(Dips[m,:], Dips[n,:]))
 
             CoupTraj.append(CoupMat)

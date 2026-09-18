@@ -7,7 +7,9 @@ sys.path.append('./main/')
 import pigment
 
 # Pigments are required to contain only four atoms: NA, NB, NC, and ND
-def calculate_coupling(PigList, ChainList):
+# theta gives the rotation away from NB --> ND axis *toward* NA --> NC axis. 
+# theta is in degrees!
+def calculate_coupling(PigList, ChainList, theta):
 
     # Output text to print on exit
     outtxt = ''
@@ -46,11 +48,19 @@ def calculate_coupling(PigList, ChainList):
     # First dimension of atcoords is number of frames.
     Nframes = np.shape(SelPigs[0].atcoords)[0]
 
+    #######################################################
+    ## Updated to include NA --> NC rotation on 9/15/2026
+    #######################################################
+    
     # Now calculate centers and dipoles
+    # NB: CentMat has native PDB units, i.e., Angstrom
     CentMat = np.zeros((Nframes,Npigs,3))
     Dips = np.zeros((Nframes,Npigs,3))
+    AxisBD = np.zeros((Nframes,Npigs,3))
+    AxisAC = np.zeros((Nframes,Npigs,3))
     CentAtoms = ['NA', 'NB', 'NC', 'ND']
     for p in range(0, Npigs):
+        
         pig = SelPigs[p]
         for name in CentAtoms:
             if pig.atnames.count(name)==0:
@@ -62,13 +72,16 @@ def calculate_coupling(PigList, ChainList):
                 # CentMat is average of all N atom positions
                 CentMat[:,p,:] += pig.atcoords[:,ndx,:]/float(len(CentAtoms))
                 
-                # Dips gets positive contribution from ND and negative from NB
-                if name=='NB':
-                    Dips[:,p,:] -= pig.atcoords[:,ndx,:]
+                if name=='NA':
+                    AxisAC[:,p,:] -= pig.atcoords[:,ndx,:]
+                elif name=='NC':
+                    AxisAC[:,p,:] += pig.atcoords[:,ndx,:]
+                elif name=='NB':
+                    AxisBD[:,p,:] -= pig.atcoords[:,ndx,:]
                 elif name=='ND':
-                    Dips[:,p,:] += pig.atcoords[:,ndx,:]
+                    AxisBD[:,p,:] += pig.atcoords[:,ndx,:]
         
-    # Note that Dips dipoles are *not* normalized!
+    # Note that Axes are *not* normalized!
     
     # If no errors: 
     if error==False:
@@ -82,7 +95,17 @@ def calculate_coupling(PigList, ChainList):
             
             # First, add normalized dipoles to DipMat
             for p in range(0, Npigs):
-                DipMat[p,:] = Dips[fr,p,:]/np.linalg.norm(Dips[fr,p,:])
+                
+                # Normalize y-axis
+                yaxis = AxisBD[fr,p,:] / np.linalg.norm(AxisBD[fr,p,:])
+                
+                # Subtract off y-axis contributions to NA-->NC
+                xapo = AxisAC[fr,p,:] - np.dot(AxisAC[fr,p,:], yaxis)*yaxis
+                
+                # And normalize xaxis
+                xaxis = xapo / np.linalg.norm(xapo)
+                
+                DipMat[p,:] = yaxis*np.cos(theta*np.pi/180.0) + xaxis*np.sin(theta*np.pi/180.0)
             
             # Now calculate interactions
             for p1 in range(0, Npigs):
@@ -119,6 +142,8 @@ def calculate_coupling(PigList, ChainList):
             # This is done when the spectrum is calculated. 
             for m in range(0, Npigs):
                 for n in range(0, Npigs):
+                    
+                    # NB: RotMat contains length scale in units of CentMat, i.e., Angstrom.
                     Rmn = CentMat[fr,n,:] - CentMat[fr,m,:]
                     
                     # MER changed sign on RotMat on 12/16/2021
